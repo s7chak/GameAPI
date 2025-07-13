@@ -10,7 +10,7 @@ CORS(app)
 def quiz():
     try:
         mode = request.args.get("mode", "mix").lower()
-        num_questions = int(request.args.get("num_questions", 10))
+        num_questions = int(request.args.get("numQuestions", 10))
         questions = util.generate_country_quiz(mode, num_questions)
         print(f"Generated {len(questions)} questions in mode: {mode}")
         return jsonify({"questions": questions})
