@@ -1,10 +1,48 @@
 import json
 import gameapi_config as config
 import random
-CACHE_FILE = config.country_metadata_file
+CAPQUIZ_CACHE_FILE = config.country_metadata_file
+METADATA_FILE = config.games_metadata_file
+
+def game_metadata(data):
+    game_id = data.get("game_id")
+    result = data.get("result")  # 'won', 'lost', 'abandoned'
+    duration_seconds = data.get("duration")
+    started_at = data.get("started_at")
+    ended_at = data.get("ended_at")
+    if not all([game_id, result, duration_seconds is not None]):
+        return "Invalid payload"
+    with open(METADATA_FILE, "r") as f:
+        meta = json.load(f)
+    if game_id not in meta:
+        meta[game_id] = {
+            "played": 0,
+            "won": 0,
+            "lost": 0,
+            "abandoned": 0,
+            "minutes": [],
+            "seconds": [],
+            "sessions": []
+        }
+
+    game = meta[game_id]
+    game["played"] += 1
+    if result in ["won", "lost", "abandoned"]:
+        game[result] += 1
+    game["minutes"].append(int(duration_seconds // 60))
+    game["seconds"].append(int(duration_seconds))
+    game["sessions"].append({
+        "started_at": started_at,
+        "ended_at": ended_at
+    })
+    print(meta)
+    with open(METADATA_FILE, "w") as f:
+        json.dump(meta, f, indent=2)
+    return f"Game metadata updated successfully: {str(meta[game_id])}"
+
 
 def generate_country_quiz(mode: str = "mix", num_questions: int = 10) -> list:
-    with open(CACHE_FILE, "r", encoding="utf-8") as f:
+    with open(CAPQUIZ_CACHE_FILE, "r", encoding="utf-8") as f:
         all_countries = json.load(f)
 
     modes = ["country", "capital", "flag"]

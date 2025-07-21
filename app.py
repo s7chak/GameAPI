@@ -1,12 +1,21 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import gameutil as util
-import os
+import json
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/api/quiz", methods=["GET"])
+@app.route("/api/game_counter", methods=["POST"])
+def game_meta_update():
+    data = request.get_json()
+    try:
+        message = util.game_metadata(data)
+        return jsonify({"message": message}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error updating game metadata {str(data)}"}), 200
+
+@app.route("/api/capquiz", methods=["GET"])
 def quiz():
     try:
         mode = request.args.get("mode", "mix").lower()
@@ -18,12 +27,9 @@ def quiz():
         print(str(e))
         return jsonify({"message": str(e)})
 
-
-
-
 @app.route("/")
 def home_gameapi():
-    return "GameAPI running for scaiverse: v1.0"
+    return "GameAPI running for scaiverse: v2.0"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Default to 8080 if PORT is not set
