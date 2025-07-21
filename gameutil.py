@@ -4,6 +4,12 @@ import random
 CAPQUIZ_CACHE_FILE = config.country_metadata_file
 METADATA_FILE = config.games_metadata_file
 
+def fetch_game_metadata():
+    meta = {}
+    with open(METADATA_FILE, "r") as f:
+        meta = json.load(f)
+    return meta
+
 def game_metadata(data):
     game_id = data.get("game_id")
     result = data.get("result")  # 'won', 'lost', 'abandoned'

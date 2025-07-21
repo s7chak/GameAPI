@@ -7,6 +7,14 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/api/game_metadata", methods=["GET"])
+def game_metadata():
+    try:
+        result = util.fetch_game_metadata()
+        return jsonify({"game_data": result}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error updating game metadata {str(e)}"}), 500
+
 @app.route("/api/game_counter", methods=["POST"])
 def game_meta_update():
     data = request.get_json()
