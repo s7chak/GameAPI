@@ -7,6 +7,20 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/api/game_counter", methods=["POST"])
+def game_meta_update():
+    data = request.get_json()
+    try:
+        message = util.update_game_metadata(data)
+        return jsonify({"message": message}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error updating game metadata {str(data)}"}), 200
+
+@app.route("/leaderboard/<game_id>")
+def leaderboard(game_id):
+    res = util.get_leaderboard(game_id)
+    return res
+
 @app.route("/api/game_metadata", methods=["GET"])
 def game_metadata():
     try:
@@ -14,15 +28,6 @@ def game_metadata():
         return jsonify({"game_data": result}), 200
     except Exception as e:
         return jsonify({"message": f"Error updating game metadata {str(e)}"}), 500
-
-@app.route("/api/game_counter", methods=["POST"])
-def game_meta_update():
-    data = request.get_json()
-    try:
-        message = util.game_metadata(data)
-        return jsonify({"message": message}), 200
-    except Exception as e:
-        return jsonify({"message": f"Error updating game metadata {str(data)}"}), 200
 
 @app.route("/api/capquiz", methods=["GET"])
 def quiz():
@@ -38,7 +43,8 @@ def quiz():
 
 @app.route("/")
 def home_gameapi():
-    return "GameAPI running for scaiverse: v2.0"
+    return "GameAPI running for scaiverse: v2.1"
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Default to 8080 if PORT is not set

@@ -1,8 +1,16 @@
+import os
 import json
 import gameapi_config as config
 import random
+from flask import jsonify
 CAPQUIZ_CACHE_FILE = config.country_metadata_file
 METADATA_FILE = config.games_metadata_file
+
+def get_leaderboard(game_id):
+    with open(METADATA_FILE) as f:
+        data = json.load(f)
+    res = jsonify(data.get(game_id, {}))
+    return res
 
 def fetch_game_metadata():
     meta = {}
@@ -10,40 +18,54 @@ def fetch_game_metadata():
         meta = json.load(f)
     return meta
 
-def game_metadata(data):
+def update_game_metadata(data):
     game_id = data.get("game_id")
     result = data.get("result")  # 'won', 'lost', 'abandoned'
-    duration_seconds = data.get("duration")
+    duration_seconds = data.get("duration_seconds")
     started_at = data.get("started_at")
     ended_at = data.get("ended_at")
+    username = data.get("username")  # optional
+    score = data.get("score")        # optional
     if not all([game_id, result, duration_seconds is not None]):
         return "Invalid payload"
-    with open(METADATA_FILE, "r") as f:
-        meta = json.load(f)
+    if os.path.exists(METADATA_FILE):
+        # Load file
+        with open(METADATA_FILE, "r") as f:
+            meta = json.load(f)
+    else:
+        os.makedirs(os.path.dirname(METADATA_FILE), exist_ok=True)
+        with open(METADATA_FILE, "w") as f:
+            json.dump({}, f)
     if game_id not in meta:
         meta[game_id] = {
             "played": 0,
             "won": 0,
             "lost": 0,
             "abandoned": 0,
+            "max_score": config.max_scores[game_id.lower()],
             "minutes": [],
             "seconds": [],
-            "sessions": []
+            "scorers": []
         }
-
     game = meta[game_id]
     game["played"] += 1
     if result in ["won", "lost", "abandoned"]:
         game[result] += 1
+
     game["minutes"].append(int(duration_seconds // 60))
     game["seconds"].append(int(duration_seconds))
-    game["sessions"].append({
-        "started_at": started_at,
-        "ended_at": ended_at
-    })
-    print(meta)
+    if score is not None:
+        if score > game.get("max_score", 0):
+            game["max_score"] = score
+
+    if username and score is not None:
+        game["scorers"].append({
+            "user": username,
+            "score": score
+        })
     with open(METADATA_FILE, "w") as f:
         json.dump(meta, f, indent=2)
+
     return f"Game metadata updated successfully: {str(meta[game_id])}"
 
 
